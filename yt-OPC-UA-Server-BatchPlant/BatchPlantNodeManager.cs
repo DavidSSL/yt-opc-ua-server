@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using BatchPlant;
@@ -10,12 +11,13 @@ namespace yt_OPC_UA_Server_BatchPlant
     public class BatchPlantNodeManager : CustomNodeManager2
     {
         private readonly BatchPlantServerConfiguration m_configuration;
-        private BatchPlantState m_batchPlant1;
-        private Timer m_simulationTimer;
+        private readonly BatchPlantState m_batchPlant1;
+
 
         public BatchPlantNodeManager(IServerInternal server, ApplicationConfiguration configuration) : base(server,
             configuration)
         {
+            m_batchPlant1 = new BatchPlantState(null);
             SystemContext.NodeIdFactory = this;
 
             // set 1 namespace for the type model and 1 name for dynamically created Nodes
@@ -33,6 +35,8 @@ namespace yt_OPC_UA_Server_BatchPlant
                 m_configuration = new BatchPlantServerConfiguration();
             }
         }
+
+        public BatchPlantState BatchPlant1 => m_batchPlant1;
 
         protected override NodeStateCollection LoadPredefinedNodes(ISystemContext context)
         {
@@ -55,23 +59,24 @@ namespace yt_OPC_UA_Server_BatchPlant
                     new NodeId(BatchPlant.Objects.BatchPlant1, NamespaceIndexes[0]), typeof(BaseObjectState));
 
                 // Convert the untyped Node to a Typed Node that can be manipulated within the Server
-                m_batchPlant1 = new BatchPlantState(null);
                 m_batchPlant1.Create(SystemContext, passiveNode);
 
                 // Replaces the Untyped Predefined Nodes with their strongly Typed versions
-                AddPredefinedNode(SystemContext, m_batchPlant1);
+                AddPredefinedNode(SystemContext, BatchPlant1);
 
-                m_batchPlant1.StartProcess.OnCallMethod = new GenericMethodCalledEventHandler(OnStartProcess);
-                m_batchPlant1.StopProcess.OnCallMethod = new GenericMethodCalledEventHandler(OnStopProcess);
+                BatchPlant1.StartProcess.OnCallMethod = new GenericMethodCalledEventHandler(OnStartProcess);
+                BatchPlant1.StopProcess.OnCallMethod = new GenericMethodCalledEventHandler(OnStopProcess);
 
-                m_simulationTimer = new System.Threading.Timer(DoSimulation, null, 5000, 10000);
+                new Timer(DoSimulation, null, 5000, 1000);
             }
         }
 
         // This is simulating the Node
         private void DoSimulation(object state)
         {
-            m_batchPlant1.Mixer.LoadcellTransmitter.Output.Value = 85;
+            var rnd = new Random();
+            BatchPlant1.Mixer.LoadcellTransmitter.Output.ClearChangeMasks(SystemContext, false);
+            BatchPlant1.Mixer.LoadcellTransmitter.Output.Value = rnd.Next(1,100);
         }
 
         private ServiceResult OnStartProcess(ISystemContext context, MethodState method, IList<object> inputArguments,

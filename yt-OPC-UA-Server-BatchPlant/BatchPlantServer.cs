@@ -6,17 +6,24 @@ namespace yt_OPC_UA_Server_BatchPlant
 {
     public class BatchPlantServer : StandardServer
     {
+        private readonly List<INodeManager> m_nodeManagers;
+
+        public List<INodeManager> NodeManagers => m_nodeManagers;
+
+        public BatchPlantServer()
+        {
+            m_nodeManagers= new List<INodeManager>();
+        }
         protected override MasterNodeManager CreateMasterNodeManager(IServerInternal server,
             ApplicationConfiguration configuration)
         {
             Utils.Trace("Creating the Node Managers.");
-            var nodeManagers = new List<INodeManager>();
 
             // create the custom Node Managers.
-            nodeManagers.Add(new BatchPlantNodeManager(server, configuration));
+            m_nodeManagers.Add(new BatchPlantNodeManager(server, configuration));
 
             // Create Master Node Manager
-            return new MasterNodeManager(server, configuration, null, nodeManagers.ToArray());
+            return new MasterNodeManager(server, configuration, null, m_nodeManagers.ToArray());
         }
 
         protected override ServerProperties LoadServerProperties()

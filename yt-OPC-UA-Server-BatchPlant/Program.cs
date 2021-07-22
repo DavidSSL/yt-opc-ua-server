@@ -33,9 +33,11 @@ namespace yt_OPC_UA_Server_BatchPlant
                 }
 
                 // check if running as a service
+                var batchPlantServer = new BatchPlantServer();
+
                 if (!Environment.UserInteractive)
                 {
-                    application.StartAsService(new BatchPlantServer());
+                    application.StartAsService(batchPlantServer);
                     return;
                 }
 
@@ -46,10 +48,11 @@ namespace yt_OPC_UA_Server_BatchPlant
                 application.CheckApplicationInstanceCertificate(false, 0).Wait();
 
                 // Start the server
-                application.Start(new BatchPlantServer()).Wait();
+                application.Start(batchPlantServer).Wait();
 
                 // Run the application interactively
                 Application.Run(new Form1(application));
+                
             }
             catch (Exception e)
             {
