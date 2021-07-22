@@ -51,39 +51,39 @@ namespace yt_OPC_UA_Server_BatchPlant
                 LoadPredefinedNodes(SystemContext, externalReferences);
 
                 // Find the untyped Batch Plan 1 Node that was created when the Model was loaded
-                var passiveMode = (BaseObjectState) FindPredefinedNode(
+                var passiveNode = (BaseObjectState) FindPredefinedNode(
                     new NodeId(BatchPlant.Objects.BatchPlant1, NamespaceIndexes[0]), typeof(BaseObjectState));
 
                 // Convert the untyped Node to a Typed Node that can be manipulated within the Server
                 m_batchPlant1 = new BatchPlantState(null);
-                m_batchPlant1.Create(SystemContext, passiveMode);
+                m_batchPlant1.Create(SystemContext, passiveNode);
 
                 // Replaces the Untyped Predefined Nodes with their strongly Typed versions
-                AddPredefinedNode(SystemContext, passiveMode);
+                AddPredefinedNode(SystemContext, m_batchPlant1);
 
                 m_batchPlant1.StartProcess.OnCallMethod = new GenericMethodCalledEventHandler(OnStartProcess);
                 m_batchPlant1.StopProcess.OnCallMethod = new GenericMethodCalledEventHandler(OnStopProcess);
 
-                m_simulationTimer = new System.Threading.Timer(DoSimulation, null, 1000, 1000);
+                m_simulationTimer = new System.Threading.Timer(DoSimulation, null, 5000, 10000);
             }
-        }
-
-        private ServiceResult OnStartProcess(ISystemContext context, MethodState method, IList<object> inputarguments,
-            IList<object> outputarguments)
-        {
-            return ServiceResult.Good;
-        }
-        
-        private ServiceResult OnStopProcess(ISystemContext context, MethodState method, IList<object> inputarguments,
-            IList<object> outputarguments)
-        {
-            return ServiceResult.Good;
         }
 
         // This is simulating the Node
         private void DoSimulation(object state)
         {
             m_batchPlant1.Mixer.LoadcellTransmitter.Output.Value = 85;
+        }
+
+        private ServiceResult OnStartProcess(ISystemContext context, MethodState method, IList<object> inputArguments,
+            IList<object> outputArguments)
+        {
+            return ServiceResult.Good;
+        }
+
+        private ServiceResult OnStopProcess(ISystemContext context, MethodState method, IList<object> inputArguments,
+            IList<object> outputArguments)
+        {
+            return ServiceResult.Good;
         }
     }
 }
